@@ -1,4 +1,4 @@
-export const WP_BASE_URL = process.env.WORDPRESS_BASE_URL || 'https://www.jagrutirehab.org';
+export const WP_BASE_URL = process.env.WORDPRESS_BASE_URL || 'https://rmh.meenait.com';
 
 export interface WpRendered {
   rendered: string;
@@ -41,7 +41,8 @@ async function wpFetch<T>(path: string, init?: RequestInit): Promise<{ data: T; 
   const res = await fetch(url, {
     ...init,
     headers: { 'Accept': 'application/json', ...(init?.headers || {}) },
-    next: { revalidate: 60 }
+    // ISR handles revalidation, so we don't need next.revalidate here
+    cache: 'no-store' // Let ISR handle caching
   } as any);
   if (!res.ok) {
     throw new Error(`WP fetch failed ${res.status}: ${await res.text()}`);
@@ -147,6 +148,16 @@ export function getPostCategories(post: WpPost): WpCategory[] {
   const terms = post._embedded?.['wp:term'] || [];
   const cats = terms.find((t) => Array.isArray(t) && t[0] && (t[0] as any).taxonomy === 'category');
   return (cats as WpCategory[] | undefined) || [];
+}
+
+export async function getAllPostSlugs() {
+  try {
+    const { data } = await wpFetch<Array<{ slug: string }>>(`/wp-json/wp/v2/posts?per_page=100&_fields=slug`);
+    return data.map(post => post.slug);
+  } catch (e) {
+    const { mockPosts } = await import('./mockData');
+    return mockPosts.map(p => p.slug);
+  }
 }
 
 export function stripHtml(html: string): string {

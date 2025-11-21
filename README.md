@@ -18,7 +18,7 @@ npm install
 Create `.env.local` in project root:
 
 ```
-WORDPRESS_BASE_URL=https://www.jagrutirehab.org
+WORDPRESS_BASE_URL=https://rmh.meenait.com
 ```
 
 3) Run locally

@@ -1,11 +1,10 @@
 import Layout from '@/components/Layout';
-import { getPosts, type WpPost, getCategories, type WpCategory, getCategoryBySlug } from '@/lib/wp';
+import { type WpPost, getCategories, type WpCategory } from '@/lib/wp';
 import PostCard from '@/components/PostCard';
-import Pagination from '@/components/Pagination';
 import CategoryPills from '@/components/CategoryPills';
-import { GetServerSideProps } from 'next';
+import { GetStaticProps } from 'next';
 
-export default function BlogIndex({ posts, page, totalPages, categories, activeCategory }: { posts: WpPost[]; page: number; totalPages: number; categories: WpCategory[]; activeCategory?: string }) {
+export default function BlogIndex({ posts, categories }: { posts: WpPost[]; categories: WpCategory[] }) {
   return (
     <Layout title="Blogs" description="Discover expert insights, recovery tips, and inspiring stories.">
       {/* Banner Section */}
@@ -19,16 +18,13 @@ export default function BlogIndex({ posts, page, totalPages, categories, activeC
 
       <section className="section">
         <div className="container">
-          <CategoryPills categories={categories} active={activeCategory} />
+          <CategoryPills categories={categories} />
           {posts.length > 0 ? (
-            <>
-              <div className="blog-list" style={{ marginTop: 16 }}>
-                {posts.map(p => (
-                  <PostCard key={p.id} post={p} />
-                ))}
-              </div>
-              <Pagination page={page} totalPages={totalPages} category={activeCategory} />
-            </>
+            <div className="blog-list" style={{ marginTop: 16 }}>
+              {posts.map(p => (
+                <PostCard key={p.id} post={p} />
+              ))}
+            </div>
           ) : (
             <div style={{ textAlign: 'center', padding: '48px 0', color: '#6b7280' }}>
               <p>No blog posts found.</p>
@@ -40,26 +36,30 @@ export default function BlogIndex({ posts, page, totalPages, categories, activeC
   );
 }
 
-export const getServerSideProps: GetServerSideProps = async ({ query }) => {
-  const pageParam = Array.isArray(query.page) ? query.page[0] : query.page;
-  const catParam = Array.isArray(query.category) ? query.category[0] : query.category;
-  const page = Math.max(1, parseInt(String(pageParam || '1'), 10) || 1);
-
-  let categoryId: number | undefined;
-  if (catParam) {
-    const cat = await getCategoryBySlug(String(catParam));
-    if (cat) categoryId = cat.id;
-  }
-
+export const getStaticProps: GetStaticProps = async () => {
   try {
-    const [{ posts, totalPages }, categories] = await Promise.all([
-      getPosts({ perPage: 12, page, categoryId }),
-      getCategories(20)
-    ]);
-
-    return { props: { posts, page, totalPages, categories, activeCategory: catParam || null } };
-  } catch (e) {
+    // Fetch posts using ISR
+    const res = await fetch('https://rmh.meenait.com/wp-json/wp/v2/posts?_embed&per_page=12');
+    const posts: WpPost[] = await res.json();
+    
+    // Fetch categories
     const categories = await getCategories(20).catch(() => [] as WpCategory[]);
-    return { props: { posts: [], page, totalPages: 1, categories, activeCategory: catParam || null } };
+
+    return {
+      props: { 
+        posts: posts || [],
+        categories: categories || []
+      },
+      revalidate: 10, // ISR: Revalidate every 10 seconds
+    };
+  } catch (e) {
+    console.error('Error fetching posts:', e);
+    return {
+      props: { 
+        posts: [],
+        categories: []
+      },
+      revalidate: 10,
+    };
   }
 };
