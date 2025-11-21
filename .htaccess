@@ -1,0 +1,19 @@
+# Next.js on Hostinger - Apache Configuration
+# Use this if Hostinger uses Apache and you need URL rewriting
+
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  
+  # Redirect to Node.js server (if using reverse proxy)
+  # Replace 3000 with your Node.js port
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteCond %{REQUEST_FILENAME} !-d
+  RewriteRule ^(.*)$ http://localhost:3000/$1 [P,L]
+</IfModule>
+
+# If using static export, uncomment below:
+# RewriteEngine On
+# RewriteCond %{REQUEST_FILENAME} !-f
+# RewriteCond %{REQUEST_FILENAME} !-d
+# RewriteRule ^(.*)$ /index.html [L]
+
