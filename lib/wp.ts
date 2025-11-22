@@ -37,17 +37,37 @@ export interface WpPost {
 }
 
 async function wpFetch<T>(path: string, init?: RequestInit): Promise<{ data: T; headers: Headers }> {
-  const url = `${WP_BASE_URL.replace(/\/$/, '')}${path}`;
+  const baseUrl = WP_BASE_URL.replace(/\/$/, '');
+  // Ensure path starts with / if it doesn't already
+  const normalizedPath = path.startsWith('/') ? path : `/${path}`;
+  const url = `${baseUrl}${normalizedPath}`;
+  
+  // Log for debugging (remove in production if needed)
+  if (process.env.NODE_ENV === 'development') {
+    console.log(`[wpFetch] Fetching from: ${url}`);
+  }
+  
   const res = await fetch(url, {
     ...init,
-    headers: { 'Accept': 'application/json', ...(init?.headers || {}) },
-    // ISR handles revalidation, so we don't need next.revalidate here
-    cache: 'no-store' // Let ISR handle caching
-  } as any);
+    headers: { 
+      'Accept': 'application/json',
+      'Content-Type': 'application/json',
+      ...(init?.headers || {}) 
+    },
+    // For Next.js static generation, ensure we get fresh data
+    cache: 'no-store' as RequestCache
+  });
+  
   if (!res.ok) {
-    throw new Error(`WP fetch failed ${res.status}: ${await res.text()}`);
+    const errorText = await res.text();
+    console.error(`[wpFetch] Failed ${res.status} for ${url}:`, errorText);
+    throw new Error(`WP fetch failed ${res.status}: ${errorText}`);
   }
+  
   const data = await res.json() as T;
+  if (process.env.NODE_ENV === 'development') {
+    console.log(`[wpFetch] Successfully fetched from ${url}, got ${Array.isArray(data) ? data.length : 1} item(s)`);
+  }
   return { data, headers: res.headers };
 }
 
@@ -57,12 +77,23 @@ export async function getPosts(params: { perPage?: number; page?: number; catego
     const page = params.page ?? 1;
     const category = params.categoryId ? `&categories=${params.categoryId}` : '';
     const query = `?per_page=${perPage}&page=${page}${category}&_embed`;
+    const fullUrl = `${WP_BASE_URL.replace(/\/$/, '')}/wp-json/wp/v2/posts${query}`;
+    
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`[getPosts] Fetching posts from: ${fullUrl}`);
+    }
+    
     const { data, headers } = await wpFetch<WpPost[]>(`/wp-json/wp/v2/posts${query}`);
     const total = parseInt(headers.get('x-wp-total') || '0', 10);
     const totalPages = parseInt(headers.get('x-wp-totalpages') || '0', 10);
+    
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`[getPosts] Successfully fetched ${data.length} posts (total: ${total}, pages: ${totalPages})`);
+    }
+    
     return { posts: data, total, totalPages };
   } catch (e) {
-    console.error('Error fetching posts:', e);
+    console.error(`[getPosts] Error fetching posts from ${WP_BASE_URL}:`, e);
     return { posts: [], total: 0, totalPages: 0 };
   }
 }

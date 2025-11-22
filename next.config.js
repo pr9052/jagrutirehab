@@ -4,7 +4,8 @@ const nextConfig = {
   images: {
     remotePatterns: [
       { protocol: 'https', hostname: 'www.jagrutirehab.org' },
-      { protocol: 'https', hostname: '**.wp.com' }
+      { protocol: 'https', hostname: '**.wp.com' },
+      { protocol: 'https', hostname: 'rmh.meenait.com' }
     ]
   },
   // Optional: Add .html extensions to match reference site structure

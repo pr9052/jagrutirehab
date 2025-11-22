@@ -99,7 +99,7 @@ npm start
 Create `.env` file in your project root:
 
 ```
-WORDPRESS_BASE_URL=https://www.jagrutirehab.org
+WORDPRESS_BASE_URL=https://rmh.meenait.com
 NODE_ENV=production
 PORT=3000
 ```
@@ -243,7 +243,7 @@ Upload everything from `out/` folder to Hostinger's `public_html/` directory.
 ### WordPress API Errors
 - Verify `WORDPRESS_BASE_URL` in `.env`
 - Check CORS settings on WordPress site
-- Test API endpoint: `https://www.jagrutirehab.org/wp-json/wp/v2/posts`
+- Test API endpoint: `https://rmh.meenait.com/wp-json/wp/v2/posts`
 
 ---
 
