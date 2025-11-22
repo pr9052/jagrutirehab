@@ -12,7 +12,7 @@ module.exports = {
     env: {
       NODE_ENV: 'production',
       PORT: 3000,
-      WORDPRESS_BASE_URL: 'https://www.jagrutirehab.org'
+      WORDPRESS_BASE_URL: 'https://rmh.meenait.com/'
     },
     error_file: './logs/err.log',
     out_file: './logs/out.log',
