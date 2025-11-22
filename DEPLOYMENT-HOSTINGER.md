@@ -236,6 +236,7 @@ Upload everything from `out/` folder to Hostinger's `public_html/` directory.
 - Make sure `.env` file is in project root
 - Restart server after changing `.env`
 
+
 ### Build Errors
 - Check Node.js version (need 18+)
 - Run `npm install` before `npm run build`
