@@ -78,7 +78,7 @@ npm install --production
 
 # 6. Create .env file
 nano .env
-# Add: WORDPRESS_BASE_URL=https://www.jagrutirehab.org
+# Add: WORDPRESS_BASE_URL=https://rmh.meenait.com
 
 # 7. Build (if not built locally)
 npm run build
