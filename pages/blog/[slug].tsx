@@ -94,11 +94,10 @@ export default function BlogPost({ post, relatedPosts, trendingPosts, featuredPo
 
 export const getStaticPaths: GetStaticPaths = async () => {
   try {
-    const res = await fetch('https://rmh.meenait.com/wp-json/wp/v2/posts?per_page=100&_fields=slug');
-    const posts: { slug: string }[] = await res.json();
+    const slugs = await getAllPostSlugs();
     
-    const paths = posts.map((post) => ({
-      params: { slug: post.slug },
+    const paths = slugs.map((slug) => ({
+      params: { slug },
     }));
 
     return {
@@ -106,6 +105,7 @@ export const getStaticPaths: GetStaticPaths = async () => {
       fallback: 'blocking', // Generate new pages on-demand if not found
     };
   } catch (e) {
+    console.error('Error fetching post slugs:', e);
     return {
       paths: [],
       fallback: 'blocking',
@@ -116,9 +116,7 @@ export const getStaticPaths: GetStaticPaths = async () => {
 export const getStaticProps: GetStaticProps = async (ctx) => {
   const slug = ctx.params?.slug as string;
   try {
-    const res = await fetch(`https://rmh.meenait.com/wp-json/wp/v2/posts?slug=${encodeURIComponent(slug)}&_embed`);
-    const posts: WpPost[] = await res.json();
-    const post = posts[0] || null;
+    const post = await getPostBySlug(slug);
 
     if (!post) {
       return { 
@@ -127,29 +125,19 @@ export const getStaticProps: GetStaticProps = async (ctx) => {
       };
     }
 
-    // Fetch related posts
-    const categoryIds = post.categories?.join(',') || '';
-    let relatedPosts: WpPost[] = [];
-    let trendingPosts: WpPost[] = [];
-    let featuredPosts: WpPost[] = [];
-
-    if (categoryIds) {
-      const relatedRes = await fetch(`https://rmh.meenait.com/wp-json/wp/v2/posts?per_page=3&categories=${categoryIds}&exclude=${post.id}&_embed`);
-      relatedPosts = await relatedRes.json();
-    }
-
-    const trendingRes = await fetch('https://rmh.meenait.com/wp-json/wp/v2/posts?per_page=1&orderby=date&order=desc&_embed');
-    trendingPosts = await trendingRes.json();
-
-    const featuredRes = await fetch('https://rmh.meenait.com/wp-json/wp/v2/posts?per_page=3&orderby=date&order=desc&_embed');
-    featuredPosts = await featuredRes.json();
+    // Fetch related posts, trending posts, and featured posts
+    const [relatedPosts, trendingPosts, featuredPosts] = await Promise.all([
+      getRelatedPosts(post, 3),
+      getTrendingPosts(1),
+      getFeaturedPosts(3)
+    ]);
 
     return {
       props: { 
         post,
-        relatedPosts: relatedPosts.filter(p => p.id !== post.id).slice(0, 3),
-        trendingPosts: trendingPosts.slice(0, 1),
-        featuredPosts: featuredPosts.slice(0, 3)
+        relatedPosts: relatedPosts || [],
+        trendingPosts: trendingPosts || [],
+        featuredPosts: featuredPosts || []
       },
       revalidate: 10, // ISR: Revalidate every 10 seconds
     };

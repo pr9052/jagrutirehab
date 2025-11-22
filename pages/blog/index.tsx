@@ -1,5 +1,5 @@
 import Layout from '@/components/Layout';
-import { type WpPost, getCategories, type WpCategory } from '@/lib/wp';
+import { type WpPost, getCategories, type WpCategory, getPosts } from '@/lib/wp';
 import PostCard from '@/components/PostCard';
 import CategoryPills from '@/components/CategoryPills';
 import { GetStaticProps } from 'next';
@@ -39,11 +39,10 @@ export default function BlogIndex({ posts, categories }: { posts: WpPost[]; cate
 export const getStaticProps: GetStaticProps = async () => {
   try {
     // Fetch posts using ISR
-    const res = await fetch('https://rmh.meenait.com/wp-json/wp/v2/posts?_embed&per_page=12');
-    const posts: WpPost[] = await res.json();
+    const { posts } = await getPosts({ perPage: 12 });
     
     // Fetch categories
-    const categories = await getCategories(20).catch(() => [] as WpCategory[]);
+    const categories = await getCategories(20);
 
     return {
       props: { 

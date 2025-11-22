@@ -62,8 +62,8 @@ export async function getPosts(params: { perPage?: number; page?: number; catego
     const totalPages = parseInt(headers.get('x-wp-totalpages') || '0', 10);
     return { posts: data, total, totalPages };
   } catch (e) {
-    const { getMockPosts } = await import('./mockData');
-    return getMockPosts(params);
+    console.error('Error fetching posts:', e);
+    return { posts: [], total: 0, totalPages: 0 };
   }
 }
 
@@ -73,8 +73,8 @@ export async function getPostBySlug(slug: string) {
     const { data } = await wpFetch<WpPost[]>(`/wp-json/wp/v2/posts${query}`);
     return data[0] || null;
   } catch (e) {
-    const { getMockPostBySlug } = await import('./mockData');
-    return getMockPostBySlug(slug);
+    console.error('Error fetching post by slug:', e);
+    return null;
   }
 }
 
@@ -83,8 +83,8 @@ export async function getCategories(limit = 50) {
     const { data } = await wpFetch<WpCategory[]>(`/wp-json/wp/v2/categories?per_page=${limit}&orderby=count&order=desc`);
     return data;
   } catch (e) {
-    const { mockCategories } = await import('./mockData');
-    return mockCategories.slice(0, limit);
+    console.error('Error fetching categories:', e);
+    return [];
   }
 }
 
@@ -93,8 +93,8 @@ export async function getCategoryBySlug(slug: string) {
     const { data } = await wpFetch<WpCategory[]>(`/wp-json/wp/v2/categories?slug=${encodeURIComponent(slug)}`);
     return data[0] || null;
   } catch (e) {
-    const { mockCategories } = await import('./mockData');
-    return mockCategories.find(c => c.slug === slug) || null;
+    console.error('Error fetching category by slug:', e);
+    return null;
   }
 }
 
@@ -102,15 +102,14 @@ export async function getRelatedPosts(post: WpPost, limit = 3) {
   try {
     const categoryIds = post.categories?.join(',') || '';
     if (!categoryIds) {
-      const { getMockRelatedPosts } = await import('./mockData');
-      return getMockRelatedPosts(post.slug, limit);
+      return [];
     }
     const query = `?per_page=${limit}&categories=${categoryIds}&exclude=${post.id}&_embed`;
     const { data } = await wpFetch<WpPost[]>(`/wp-json/wp/v2/posts${query}`);
     return data.filter(p => p.id !== post.id).slice(0, limit);
   } catch (e) {
-    const { getMockRelatedPosts } = await import('./mockData');
-    return getMockRelatedPosts(post.slug, limit);
+    console.error('Error fetching related posts:', e);
+    return [];
   }
 }
 
@@ -120,8 +119,8 @@ export async function getTrendingPosts(limit = 1) {
     const { data } = await wpFetch<WpPost[]>(`/wp-json/wp/v2/posts${query}`);
     return data;
   } catch (e) {
-    const { getMockTrendingPosts } = await import('./mockData');
-    return getMockTrendingPosts(limit);
+    console.error('Error fetching trending posts:', e);
+    return [];
   }
 }
 
@@ -131,8 +130,8 @@ export async function getFeaturedPosts(limit = 3) {
     const { data } = await wpFetch<WpPost[]>(`/wp-json/wp/v2/posts${query}`);
     return data;
   } catch (e) {
-    const { getMockFeaturedPosts } = await import('./mockData');
-    return getMockFeaturedPosts(limit);
+    console.error('Error fetching featured posts:', e);
+    return [];
   }
 }
 
@@ -155,8 +154,8 @@ export async function getAllPostSlugs() {
     const { data } = await wpFetch<Array<{ slug: string }>>(`/wp-json/wp/v2/posts?per_page=100&_fields=slug`);
     return data.map(post => post.slug);
   } catch (e) {
-    const { mockPosts } = await import('./mockData');
-    return mockPosts.map(p => p.slug);
+    console.error('Error fetching post slugs:', e);
+    return [];
   }
 }
 
