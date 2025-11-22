@@ -18,6 +18,28 @@ Hostinger offers different hosting plans. Your Next.js app needs **Node.js suppo
 
 ## Step-by-Step Deployment (VPS/Cloud Hosting)
 
+### 0. Local Development Setup
+
+Before deploying, set up your local environment:
+
+1. **Create `.env.local` file** in your project root (for local development):
+```bash
+# .env.local (DO NOT commit this file - it's in .gitignore)
+WORDPRESS_BASE_URL=https://rmh.meenait.com
+NODE_ENV=development
+```
+
+2. **Test locally**:
+```bash
+# Install dependencies
+npm install
+
+# Run development server
+npm run dev
+```
+
+**Note**: `.env.local` is for local development only. Do NOT upload this file to the server.
+
 ### 1. Build Your Project Locally
 
 ```bash
@@ -47,13 +69,14 @@ Upload these files/folders to your Hostinger server:
 ├── components/        ← Your components
 ├── lib/               ← Your utilities
 ├── styles/            ← Your styles
-└── .env               ← Environment variables (create on server)
+└── .env               ← Environment variables (create on server, NOT .env.local)
 ```
 
 **OR** upload everything except:
 - `node_modules/` (install on server instead)
 - `.git/` (if using git)
 - `.next/` (can rebuild on server)
+- `.env.local` (local development only - DO NOT upload)
 
 ### 3. Server Setup on Hostinger
 
@@ -96,13 +119,20 @@ npm start
 
 ### 4. Create .env File on Server
 
-Create `.env` file in your project root:
+**Important**: On the server, create a `.env` file (NOT `.env.local`). The `.env` file is for production.
 
-```
+Create `.env` file in your project root on the server:
+
+```bash
+# .env (Production - create this on server)
 WORDPRESS_BASE_URL=https://rmh.meenait.com
 NODE_ENV=production
 PORT=3000
 ```
+
+**Difference**:
+- **`.env.local`** → Use for local development (already in `.gitignore`)
+- **`.env`** → Use for production/server deployment
 
 ### 5. Start the Application
 
@@ -233,8 +263,11 @@ Upload everything from `out/` folder to Hostinger's `public_html/` directory.
 - Use reverse proxy (Nginx) or Hostinger's Node.js manager
 
 ### Environment Variables
-- Make sure `.env` file is in project root
+- **Local Development**: Use `.env.local` (not committed to git)
+- **Production/Server**: Use `.env` file in project root
+- Make sure `.env` file is in project root on server
 - Restart server after changing `.env`
+- Never upload `.env.local` to the server
 
 
 ### Build Errors
@@ -242,9 +275,10 @@ Upload everything from `out/` folder to Hostinger's `public_html/` directory.
 - Run `npm install` before `npm run build`
 
 ### WordPress API Errors
-- Verify `WORDPRESS_BASE_URL` in `.env`
+- Verify `WORDPRESS_BASE_URL` in `.env` (production) or `.env.local` (local)
 - Check CORS settings on WordPress site
 - Test API endpoint: `https://rmh.meenait.com/wp-json/wp/v2/posts`
+- Ensure environment variables are loaded correctly (restart server after changes)
 
 ---
 

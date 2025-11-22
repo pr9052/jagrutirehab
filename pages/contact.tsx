@@ -10,17 +10,31 @@ export default function ContactPage() {
     message: '',
     appointmentType: 'Offline'
   });
+  const [status, setStatus] = useState("");
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    // Handle form submission here
-    alert('Thank you for contacting us! We will get back to you soon.');
-    setFormData({ name: '', email: '', phone: '', subject: '', message: '', appointmentType: 'Offline' });
-  };
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+  function handleChange(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) {
     setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
+  }
+
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setStatus("Sending...");
+
+    const res = await fetch("/api/contact", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(formData),
+    });
+
+    const data = await res.json();
+
+    if (res.ok) {
+      setStatus("Message sent successfully!");
+      setFormData({ name: "", email: "", phone: "", subject: "", message: "", appointmentType: "Offline" });
+    } else {
+      setStatus("Failed to send message.");
+    }
+  }
 
   return (
     <Layout 
